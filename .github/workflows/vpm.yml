@@ -3,6 +3,9 @@ name: Build Release
 on: 
   workflow_dispatch:
 
+env:
+  PACKAGE_NAME: net.yarukizero.vrchat.shizuku
+
 jobs:
 
   # Validate Repository Configuration
