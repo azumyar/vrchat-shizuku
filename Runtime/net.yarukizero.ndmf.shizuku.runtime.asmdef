@@ -1,0 +1,21 @@
+{
+    "name": "Shizuku.Runtime",
+    "rootNamespace": "",
+    "references": [
+        "VRC.SDKBase",
+        "VRC.SDK3A",
+        "nadena.dev.ndmf",
+        "nadena.dev.ndmf.runtime",
+        "Shizuku"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

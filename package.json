@@ -1,0 +1,18 @@
+{
+  "name": "net.yarukizero.vrchat.shizuku",
+  "version": "0.0.0",
+  "displayName": "Shizuku",
+  "description": "スクリプトでいい感じに定義したい",
+  "author": {
+    "name": "azumyar",
+    "url": "https://github.com/azumyar"
+  },
+  "license": "MIT",
+  "url" : "https://github.com/azumyar/vrchat-shizuku.git",
+  "documentationUrl": "",
+  "changelogUrl": "",
+  "unity": "2022.3",
+  "vpmDependencies": {
+    "nadena.dev.modular-avatar": ">=1.9.10"
+  }
+}

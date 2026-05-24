@@ -1,0 +1,28 @@
+{
+    "name": "Shizuku.Editor",
+    "rootNamespace": "",
+    "references": [
+        "AvatarParametersDriver.Runtime",
+        "nadena.dev.ndmf",
+        "nadena.dev.ndmf.runtime",
+        "nadena.dev.ndmf.vrchat",
+        "nadena.dev.modular-avatar.core",
+        "VRC.SDKBase",
+        "VRC.SDK3A",
+        "VRC.SDKBase.Editor",
+        "VRC.SDK3A.Editor",
+        "Shizuku.Runtime",
+        "Shizuku"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
