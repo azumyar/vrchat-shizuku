@@ -4,10 +4,9 @@ on:
   workflow_dispatch:
 
 env:
-  PACKAGE_NAME: net.yarukizero.vrchat.shizuku
+  PACKAGE_NAME: "net.yarukizero.vrchat.shizuku"
 
 jobs:
-
   # Validate Repository Configuration
   config:
     runs-on: ubuntu-latest
