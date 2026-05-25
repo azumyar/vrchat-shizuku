@@ -43,7 +43,10 @@ jobs:
           # package.jsonを更新
           # 動くとこまで
           # 細かいことはあとで考える
-          _v=0.0.`date '+%y%m%d%H%M'`
+          now=`date '+%s'
+          base=`date --date '2026-01-01 00:00:00' +%s`
+          build=`expr $now - $base`
+          _v=0.0.${build}
           jq  --arg ver  ${_v}  '.version = $ver' "${{ env.packagePath }}/package.json"  > _package.json
           mv _package.json "${{ env.packagePath }}/package.json"
 
