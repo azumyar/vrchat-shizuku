@@ -38,6 +38,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
 
+      - name: Patch package.json
+        run: |
+          # package.jsonを更新
+          # 動くとこまで
+          # 細かいことはあとで考える
+          _v=0.0.`date '+%Y%m%d%H%M%S`
+          jq  --arg ver  ${_v}  '.version = $ver' "${{ env.packagePath }}/package.json"  > _package.json
+          mv _package.json "${{ env.packagePath }}/package.json"
+
       # Get the Package version based on the package.json file
       - name: Get Version
         id: version
