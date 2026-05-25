@@ -24,14 +24,16 @@ using System.Threading.Tasks;
 
 namespace net.yarukizero.vrchat.shizuku {
 	public class Paramator<T> {
-		public string name;
-		public T value;
-		public bool? localOnly;
+		public string Name { get; }
+		public T DefaultValue { get; }
+		public bool? LocalOnly { get; }
+		public bool? Save {  get; }
 
-		public Paramator(string name, T value=default, bool? localOnly=null) {
-			this.name = name;
-			this.value = value;
-			this.localOnly = localOnly;
+		public Paramator(string name, T defaultValue=default, bool? localOnly=null, bool? save=null) {
+			this.Name = name;
+			this.DefaultValue = defaultValue;
+			this.LocalOnly = localOnly;
+			this.Save = save;
 		}
 	}
 
@@ -45,7 +47,7 @@ namespace net.yarukizero.vrchat.shizuku {
 			var v = exp?.Invoke(@this);
 			ThrowIf<InvalidDataException>(v != null);
 
-			@this.Define(v.name, VrcType.Bool, @float(v.value), v.localOnly);
+			@this.Define(v.Name, VrcType.Bool, @float(v.DefaultValue), v.LocalOnly, v.Save);
 			return @this;
 		}
 
@@ -53,7 +55,7 @@ namespace net.yarukizero.vrchat.shizuku {
 			var v = exp?.Invoke(@this);
 			ThrowIf<InvalidDataException>(v != null);
 
-			@this.Define(v.name, VrcType.Int, @float(v.value), v.localOnly);
+			@this.Define(v.Name, VrcType.Int, @float(v.DefaultValue), v.LocalOnly, v.Save);
 			return @this;
 		}
 
@@ -61,7 +63,7 @@ namespace net.yarukizero.vrchat.shizuku {
 			var v = exp?.Invoke(@this);
 			ThrowIf<InvalidDataException>(v != null);
 
-			@this.Define(v.name, VrcType.Float, @float(v.value), v.localOnly);
+			@this.Define(v.Name, VrcType.Float, @float(v.DefaultValue), v.LocalOnly, v.Save);
 			return @this;
 		}
 
@@ -70,7 +72,7 @@ namespace net.yarukizero.vrchat.shizuku {
 			var v = exp?.Invoke(@this);
 			ThrowIf<InvalidDataException>(v != null);
 
-			@this.Define(v.name, VrcType.Float, @float(v.value), v.localOnly);
+			@this.Define(v.Name, VrcType.Float, @float(v.DefaultValue), v.LocalOnly, v.Save);
 			return @this;
 		}
 
@@ -100,69 +102,5 @@ namespace net.yarukizero.vrchat.shizuku {
 		private static float? @float(double v) {
 			return (float)v;
 		}
-
-	}
-
-
-	public class DefinedResult {
-		private readonly IEnumerable<DefinedParamator> def;
-
-		public bool IsLocalOnly { get; }
-
-		public DefinedResult(IParameterizableSequence sequence, IParameterizableHost host) {
-			this.IsLocalOnly = host.IsLocalOnly;
-			def = sequence.GetParamators()
-				.ToArray();
-		}
-
-		public IEnumerable<DefinedParamator> GetDefinedParamators() {
-			return def;
-		}
-	}
-}
-
-namespace net.yarukizero.vrchat.shizuku.Linq {
-	public class DefinedParamator {
-		public string name;
-		public VrcType type;
-		public float? value;
-		public bool? localOnly;
-
-		public DefinedParamator(string name, VrcType type, float? value, bool? localOnly) {
-			this.name = name;
-			this.type = type;
-			this.value = value;
-			this.localOnly = localOnly;
-		}
-	}
-
-	public class ShizukuParSequence : IParameterizableSequence {
-		private readonly List<DefinedParamator> def = new();
-
-		private IParameterizableHost Host { get; }
-
-		public ShizukuParSequence(IParameterizableHost host) {
-			this.Host = host;
-		}
-
-		public void Define(string name, VrcType type, float? value, bool? localOnly) {
-			def.Add(new(name, type, value, localOnly));
-		}
-
-		public IEnumerable<DefinedParamator> GetParamators() {
-			return def.AsReadOnly();
-		}
-
-		public DefinedResult ToResult() {
-			return new(this, this.Host);
-		}
-
-	}
-
-	public interface IParameterizableSequence {
-		void Define(string name, VrcType type, float? value, bool? localOnly);
-		IEnumerable<DefinedParamator> GetParamators();
-
-		DefinedResult ToResult();
 	}
 }

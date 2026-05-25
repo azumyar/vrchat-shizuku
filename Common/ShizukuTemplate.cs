@@ -18,9 +18,8 @@ namespace net.yarukizero.vrchat.shizuku {
 			return Array.Empty<DefinedResult>();
 		}
 
-		public virtual IEnumerable<ShizukuResult> Transitions(ITransitionHost host) {
-			// null は許可しない
-			return Array.Empty<ShizukuResult>();
+		public virtual IEnumerable<DependencyResult> Dependencies(IDependencyHost host) {
+			return Array.Empty<DependencyResult>();
 		}
 
 	}

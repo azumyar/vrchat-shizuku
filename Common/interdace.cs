@@ -12,10 +12,10 @@ namespace net.yarukizero.vrchat.shizuku {
 		/// <returns></returns>
 		public IEnumerable<DefinedResult> Parameters(IParameterizableHost host);
 
-		/// <summary>シーケンス定義いい名前が思つかないのでざつざつ</summary>
+		/// <summary>パラメータの依存関係を設定する</summary>
 		/// <param name="host"></param>
 		/// <returns></returns>
-		public IEnumerable<ShizukuResult> Transitions(ITransitionHost host);
+		public IEnumerable<DependencyResult> Dependencies(IDependencyHost host);
     }
 
     /// <summary>VRCパラメータ保管庫</summary>

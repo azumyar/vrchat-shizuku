@@ -9,5 +9,7 @@ namespace net.yarukizero.vrchat.shizuku {
 	}
 
 	partial class ShizukuHost : IParameterizableHost {
+		partial void InitParamator(IShizuku template, IHostEnviroment env) {}
+
 	}
 }

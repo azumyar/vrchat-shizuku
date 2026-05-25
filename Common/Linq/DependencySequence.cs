@@ -39,7 +39,7 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
     public interface IActionSequence : ISequence {
         void AddAction(__ActionExp action);
         IConditonSequence ToNext();
-        ShizukuResult ToResult();
+        DependencyResult ToResult();
     }
 
     public enum ShizukuOprator {
@@ -49,10 +49,10 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
         GreaterThan,
     }
 
-    public class ShizukuSequence : IConditonSequence, IActionSequence {
+    public class DependencySequence : IConditonSequence, IActionSequence {
         private class CombineStore : ICombineStore {
-            private ShizukuSequence sequence;
-            public CombineStore(ShizukuSequence sequence) {
+            private DependencySequence sequence;
+            public CombineStore(DependencySequence sequence) {
                 this.sequence = sequence;
             }
 
@@ -112,21 +112,21 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
         }
 
         internal ICombineStore Store { get; }
-        internal ITransitionHost Host { get; }
+        internal IDependencyHost Host { get; }
         internal IEnumerable<SequenceStage> Stages {
              get {
                 return this.stages.AsReadOnly();
             }
         }
 
-        internal ShizukuSequence(ITransitionHost host, string sequenceName, string targetStage) {
+        internal DependencySequence(IDependencyHost host, string sequenceName, string targetStage) {
             this.Store = new CombineStore(this);
             this.Host = host;
 			this.Name = sequenceName;
 			this.TargetStage = targetStage;
 		}
 
-        internal ShizukuSequence SetLocalValiable(string name, VrcType type, float? defaultVal) {
+        internal DependencySequence SetLocalValiable(string name, VrcType type, float? defaultVal) {
             this.localVal.Add(name, (name, type, defaultVal));
             return this;
         }
@@ -158,7 +158,7 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
             return this;
         }
 
-        public ShizukuResult ToResult() {
+        public DependencyResult ToResult() {
             this.Staging();
             return new(this);
         }

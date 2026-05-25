@@ -7,11 +7,11 @@ using __ActionParam = net.yarukizero.vrchat.shizuku.Linq.Actions.ShizukuParam;
 using System.Linq;
 
 namespace net.yarukizero.vrchat.shizuku {
-	public interface ITransitionHost : IShizukuHost, IShizukuStore<__ConditionsParam>, IShizukuStore<__ActionParam> {
+	public interface IDependencyHost : IShizukuHost, IShizukuStore<__ConditionsParam>, IShizukuStore<__ActionParam> {
 		IEnumerable<IVrcParameter> GetParameter();
 	}
 
-	public partial class ShizukuHost : ITransitionHost {
+	public partial class ShizukuHost : IDependencyHost {
 		// パラメータリスト返却用interface実装してるだけのクラス
 		class Param : IVrcParameter {
 			public string Name { get; }
@@ -27,7 +27,7 @@ namespace net.yarukizero.vrchat.shizuku {
 
 		__ConditionsParam IShizukuStore<__ConditionsParam>.this[string name] {
 			get {
-				var v = ((ITransitionHost)this).GetParameter()
+				var v = ((IDependencyHost)this).GetParameter()
 					.Where(x => x.Name == name)
 					.FirstOrDefault();
 				if(v == null) {
@@ -40,7 +40,7 @@ namespace net.yarukizero.vrchat.shizuku {
 
 		__ActionParam IShizukuStore<__ActionParam>.this[string name] {
 			get {
-				var v = ((ITransitionHost)this).GetParameter()
+				var v = ((IDependencyHost)this).GetParameter()
 					.Where(x => x.Name == name)
 					.FirstOrDefault();
 				if(v == null) {
@@ -51,13 +51,13 @@ namespace net.yarukizero.vrchat.shizuku {
 			}
 		}
 
-		partial void InitSequence(IShizuku template, IHostEnviroment env) {}
+		partial void InitDependency(IShizuku template, IHostEnviroment env) {}
 
 		/// <summary>
 		/// HOSTが管理しているVRCパラメータの一覧を取得
 		/// </summary>
 		/// <returns></returns>
-		IEnumerable<IVrcParameter> ITransitionHost.GetParameter() {
+		IEnumerable<IVrcParameter> IDependencyHost.GetParameter() {
 			foreach(var it in this.Enviroment.GetParameter()) {
 				yield return new Param(it);
 			}

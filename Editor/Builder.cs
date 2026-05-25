@@ -73,8 +73,6 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                 try {
                     var shizuku = System.Activator.CreateInstance(it) as IShizuku;
                     if(shizuku != null) {
-                        Debug.LogWarning($"---- new {it.FullName}");
-
                         proc.Add((shizuku, new ShizukuHost(shizuku, env)));
                     }
                 }
@@ -83,23 +81,19 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                 }
             }
 
-            Debug.LogWarning($"---- def");
-
-
             // 変数定義
             var parameters = ctx.AvatarRootObject.AddComponent<ModularAvatarParameters>();
             foreach(var it in proc.SelectMany(
                 x => x.Shizuku.Parameters(x.Host) ??  Array.Empty<DefinedResult>()
                 ).SelectMany(x => x.GetDefinedParamators())) {
                 
-                Debug.LogWarning($"----{it.name} {it.type}");
-                env.@params.Add((it.name, it.type));
+                env.@params.Add((it.Name, it.Type));
                 parameters.parameters.Add(new() {
-                    nameOrPrefix = it.name,
-                    syncType = it.type.ToMaType(),
-                    localOnly = false,
-                    saved = false,
-                    defaultValue = it.value ?? 0
+                    nameOrPrefix = it.Name,
+                    syncType = it.Type.ToMaType(),
+                    localOnly = it.LocalOnly,
+                    saved = it.Save,
+                    defaultValue = it.DefaultValue,
                 });
             }
 
@@ -115,7 +109,7 @@ namespace net.yarukizero.vrchat.shizuku.editor {
 
             // 処理
             foreach(var it in proc) {
-                Apply(it.Shizuku.Transitions(it.Host), animator, clip);
+                Apply(it.Shizuku.Dependencies(it.Host), animator, clip);
             }
 
             // 結合
@@ -156,7 +150,7 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                 this.Active = active;
             }
         }
-        private static void Apply(IEnumerable<ShizukuResult> entries, AnimatorController animator, AnimationClip clip) {
+        private static void Apply(IEnumerable<DependencyResult> entries, AnimatorController animator, AnimationClip clip) {
             var namedLayers = new Dictionary<string, NamedLayer>();
             var dic = new Dictionary<string, NamedState>();
 

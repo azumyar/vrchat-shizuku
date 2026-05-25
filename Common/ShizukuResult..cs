@@ -15,14 +15,32 @@ namespace net.yarukizero.vrchat.shizuku {
         IEnumerable<__ActionRecord> Actions { get; }
     }
 
-    public class ShizukuResult {
+	public class DefinedResult {
+		private readonly IEnumerable<DefinedParamator> def;
+
+		public bool IsLocalOnly { get; }
+
+		public DefinedResult(IParameterizableSequence sequence, IParameterizableHost host) {
+			this.IsLocalOnly = host.IsLocalOnly;
+			def = sequence.GetParamators()
+				.ToArray();
+		}
+
+		public IEnumerable<DefinedParamator> GetDefinedParamators() {
+			return def;
+		}
+	}
+
+
+
+	public class DependencyResult {
         class Stage : IResultStage {
 			public string Name { get; }
             public IEnumerable<IEnumerable<__ConditionsRecord>> Or { get; }
             public IEnumerable<__ActionRecord> Actions { get; }
-        /// <summary>シーケンスをローカルで実行するか否か</summary>
+			/// <summary>シーケンスをローカルで実行するか否か</summary>
             public bool IsLocalOnly { get; }
-            public Stage(SequenceStage stage, ITransitionHost host) {
+            public Stage(SequenceStage stage, IDependencyHost host) {
                 this.Or = stage.CompileOr();
                 this.Actions = stage.CompileActions();
 				this.Name = stage.Name;
@@ -36,7 +54,7 @@ namespace net.yarukizero.vrchat.shizuku {
 		public string TargetStage { get; }
 
 
-		internal ShizukuResult(ShizukuSequence sequence) {
+		internal DependencyResult(DependencySequence sequence) {
 			this.SequenceName = sequence.Name;
 			this.TargetStage = sequence.TargetStage;
             this.Stages = sequence.Stages.Select(x => new Stage(x, sequence.Host))

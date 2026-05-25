@@ -29,10 +29,12 @@ namespace net.yarukizero.vrchat.shizuku {
 		public ShizukuHost(IShizuku template, IHostEnviroment env) {
 			this.Enviroment = env;
 			this.isLocalOnly = template.IsLocalOnly;
-			InitSequence(template, env);
 
+			InitParamator(template, env);
+			InitDependency(template, env);
 		}
 
-		partial void InitSequence(IShizuku template, IHostEnviroment env);
+		partial void InitParamator(IShizuku template, IHostEnviroment env);
+		partial void InitDependency(IShizuku template, IHostEnviroment env);
 	}
 }

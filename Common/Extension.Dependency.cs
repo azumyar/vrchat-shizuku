@@ -25,11 +25,11 @@ namespace net.yarukizero.vrchat.shizuku {
         /// <param name="this"></param>
         /// <returns></returns>
         public static IConditonSequence Entry(
-			this ITransitionHost @this,
+			this IDependencyHost @this,
 			string sequenceName=null,
 			string targetStage=null) {
 
-            return new ShizukuSequence(
+            return new DependencySequence(
 				@this,
 				sequenceName: sequenceName,
 				targetStage: targetStage);
@@ -41,18 +41,18 @@ namespace net.yarukizero.vrchat.shizuku {
         }
 
         // 仮置き
-        public static ShizukuSequence Bool(this ShizukuSequence @this, string name) {
+        public static DependencySequence Bool(this DependencySequence @this, string name) {
             return @this.SetLocalValiable(name, VrcType.Bool, default);
         }
 
         // 仮置き
-        public static ShizukuSequence Int(this ShizukuSequence @this, string name) {
+        public static DependencySequence Int(this DependencySequence @this, string name) {
             return @this.SetLocalValiable(name, VrcType.Int, default);
         }
 
 
         // 仮置き
-        public static ShizukuSequence Float(this ShizukuSequence @this, string name) {
+        public static DependencySequence Float(this DependencySequence @this, string name) {
             return @this.SetLocalValiable(name, VrcType.Float, default);
         }
 
@@ -96,7 +96,7 @@ namespace net.yarukizero.vrchat.shizuku {
             return @this;
         }
 
-        public static ShizukuResult Result(this IActionSequence @this) {
+        public static DependencyResult Result(this IActionSequence @this) {
             return @this.ToResult();
         }
 
