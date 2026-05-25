@@ -1,4 +1,4 @@
-# vrchat-shuzuku
+# vrchat-shizuku
 
 ## これなに
 VRCパラメータの依存関係整理するの形式言語で書きたい…！  
@@ -20,8 +20,8 @@ using net.yarukizero.vrchat.shizuku;
 
 [ShizukuClient]
 class Megane : ShizukuTemplate {
-  protected override IEnumerable<ShizukuResult> DoDefine(ShizukuHost host)
-    => new ShizukuResult[] {
+  public override IEnumerable<DependencyResult> Dependencies(IDependencyHost host)
+    => new DependencyResult[] {
       host.Entry()
         .Condition(x => (x["SW_int_メガネ"] == 0))
         .Action(x => x["SW_メガネ"].Set(false))
@@ -53,7 +53,7 @@ private static readonly (bool On, bool Black)[] template = new (bool, bool)[] {
   (true, true),
 };
 
-protected override IEnumerable<ShizukuResult> DoDefine(ShizukuHost host) 
+public override IEnumerable<DependencyResult> Dependencies(IDependencyHost host) 
   => template.Select((x, i) => host.Entry()
     .Condition(y => (y["SW_int_メガネ"] == i))
     .Action(y => y["SW_メガネ"].Set(x.On))
