@@ -12,9 +12,19 @@ using net.yarukizero.vrchat.shizuku;
 using net.yarukizero.vrchat.shizuku.runtime;
 
 using @ref = System.Reflection;
+using net.yarukizero.vrchat.shizuku.Linq;
 
 namespace net.yarukizero.vrchat.shizuku.editor {
     internal class Builder {
+        private class Env : IHostEnviroment {
+            // フィールド公開はよくないけど内部クラスだしいいんじゃない？って感じもあり
+            internal readonly List<(string Name, VrcType Type)> @params = new();
+
+            public IEnumerable<(string Name, VrcType Type)> GetParameter() {
+                return this.@params.AsReadOnly();
+            }
+        }
+
         private @ref.Assembly assembly { get; }
         
         public Builder() {
@@ -33,8 +43,9 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                 return;
             }
 
+            var env = new Env();
             // 実行時に定義されている変数一覧を取得
-            var @params = ParameterInfo.ForContext(ctx)
+            env.@params.AddRange(ParameterInfo.ForContext(ctx)
                 .GetParametersForObject(ctx.AvatarRootObject)
                 .SelectMany(x => x.SubParameters())
                 .Select<ProvidedParameter, (string Name, VrcType Type)?>(x => {
@@ -49,17 +60,7 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                         return null;
                     }
                 }).Where(x => x.HasValue)
-                .Select(x => x.Value)
-                .ToArray();
-
-            var clip = CreateEmptyAnimationClip();
-            var animator = new AnimatorController();
-            foreach(var it in @params) {
-                animator.AddParameter(new AnimatorControllerParameter() {
-                    name = it.Name,
-                    type = it.Type.ToAnimationType(),
-                });
-            }
+                .Select(x => x.Value));
 
             // IShizukuのインスタンス化
             var proc = new List<(IShizuku Shizuku, ShizukuHost Host)>();
@@ -72,7 +73,9 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                 try {
                     var shizuku = System.Activator.CreateInstance(it) as IShizuku;
                     if(shizuku != null) {
-                        proc.Add((shizuku, new ShizukuHost(shizuku, @params)));
+                        Debug.LogWarning($"---- new {it.FullName}");
+
+                        proc.Add((shizuku, new ShizukuHost(shizuku, env)));
                     }
                 }
                 catch(Exception e) {
@@ -80,9 +83,39 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                 }
             }
 
+            Debug.LogWarning($"---- def");
+
+
+            // 変数定義
+            var parameters = ctx.AvatarRootObject.AddComponent<ModularAvatarParameters>();
+            foreach(var it in proc.SelectMany(
+                x => x.Shizuku.Parameters(x.Host) ??  Array.Empty<DefinedResult>()
+                ).SelectMany(x => x.GetDefinedParamators())) {
+                
+                Debug.LogWarning($"----{it.name} {it.type}");
+                env.@params.Add((it.name, it.type));
+                parameters.parameters.Add(new() {
+                    nameOrPrefix = it.name,
+                    syncType = it.type.ToMaType(),
+                    localOnly = false,
+                    saved = false,
+                    defaultValue = it.value ?? 0
+                });
+            }
+
+
+            var clip = CreateEmptyAnimationClip();
+            var animator = new AnimatorController();
+            foreach(var it in env.@params) {
+                animator.AddParameter(new AnimatorControllerParameter() {
+                    name = it.Name,
+                    type = it.Type.ToAnimationType(),
+                });
+            }
+
             // 処理
             foreach(var it in proc) {
-                Apply(it.Shizuku.Define(it.Host), animator, clip);
+                Apply(it.Shizuku.Transitions(it.Host), animator, clip);
             }
 
             // 結合
@@ -97,16 +130,83 @@ namespace net.yarukizero.vrchat.shizuku.editor {
         }
 
 
+        private class NamedLayer {
+            public string Name { get; }
+            public AnimatorControllerLayer Layer { get; }
+            public AnimatorState Idle { get; }
+
+            public NamedLayer (string name, AnimatorControllerLayer layer, AnimatorState idle) {
+                this.Name = name;
+                this.Layer = layer;
+                this.Idle = idle;
+            }
+        }
+
+
+        private class NamedState {
+            public string Name { get; }
+            public AnimatorControllerLayer Layer { get; }
+            public AnimatorState Idle { get; }
+            public AnimatorState Active { get; }
+
+            public NamedState (string name, AnimatorControllerLayer layer, AnimatorState idle, AnimatorState active) {
+                this.Name = name;
+                this.Layer = layer;
+                this.Idle = idle;
+                this.Active = active;
+            }
+        }
         private static void Apply(IEnumerable<ShizukuResult> entries, AnimatorController animator, AnimationClip clip) {
+            var namedLayers = new Dictionary<string, NamedLayer>();
+            var dic = new Dictionary<string, NamedState>();
+
             foreach(var it in entries.Select((x, i) => (Index: i, Value: x))) {
-                animator.AddLayer($"{ShizukuEnviromnet.ParseUnitySafe()}-{it.Index}");
-                var layer = animator.layers.Last();
-                var idle = layer.stateMachine.NewState("idle", clip);
-                var last = idle;
-                layer.defaultWeight = 1f;
-                layer.stateMachine.defaultState = idle;
+                AnimatorControllerLayer layer;
+                AnimatorState idle;
+                AnimatorState last;
+                if(!string.IsNullOrEmpty(it.Value.SequenceName)) {
+                    if(namedLayers.TryGetValue(it.Value.SequenceName, out var val)) {
+                        layer = val.Layer;
+                        idle = val.Idle;
+                        last = val.Idle;
+                        goto start;
+                    }
+                }
+
+                if(!string.IsNullOrEmpty(it.Value.TargetStage)) {
+                    if(!dic.TryGetValue(it.Value.TargetStage, out var target)) {
+                        throw new InvalidOperationException($"Stage[{it.Value.TargetStage}]は定義されていません");
+                    }
+                    layer = target.Layer;
+                    idle = target.Idle;
+                    last = target.Active;
+                    goto start;
+                }
+
+                {
+                    var hasName = !string.IsNullOrEmpty(it.Value.SequenceName);
+                    var layerSuffix = hasName ? it.Value.SequenceName : $"{it.Index}";
+                    var layerName = $"{ShizukuEnviromnet.ParseUnitySafe()}-{layerSuffix}";
+                    animator.AddLayer($"{layerName}");
+                    layer = animator.layers.Last();
+                    idle = layer.stateMachine.NewState("idle", clip);
+                    last = idle;
+                    layer.defaultWeight = 1f;
+                    layer.stateMachine.defaultState = idle;
+                    if(hasName) {
+                        namedLayers.Add(layerSuffix, new(layerName, layer, idle));
+                    }
+                }
+            start:
+
                 foreach(var stage in it.Value.Stages.Select((x, i) => (Index: i, Value: x))) {
-                    var active = layer.stateMachine.NewState($"stage{stage.Index}", clip);
+                    var hasName = !string.IsNullOrEmpty(stage.Value.Name);
+                    var stageName = hasName ? stage.Value.Name : $"stage-{it.Index}-{stage.Index}";
+                    var active = layer.stateMachine.NewState(stageName, clip);
+                    if(hasName) {
+                        dic.Add(stageName, new NamedState(stageName, layer, idle, active));
+                    }
+
                     active.behaviours = new StateMachineBehaviour[] {
                         stage.Value.CreateDriver(),
                     };
@@ -127,7 +227,6 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                     last.AddTransition(idle).ToFree();
                 }
             }
-            
         }
 
         private static AnimationClip CreateEmptyAnimationClip() {

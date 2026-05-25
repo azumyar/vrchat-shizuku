@@ -60,7 +60,7 @@ namespace net.yarukizero.vrchat.shizuku.Linq.Conditions {
 
         private static void ThrowIf(ShizukuParam a, VrcType type) {
             if (a.Type != type) {
-                throw new ExpressionException($"右辺{a.Type }と左辺{type}の型が異なります");
+                throw new ExpressionException($"右辺{a.Name}:{a.Type }と左辺{type}の型が異なります");
             }
         }
     }

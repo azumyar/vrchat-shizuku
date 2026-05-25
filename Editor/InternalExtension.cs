@@ -16,9 +16,23 @@ using net.yarukizero.vrchat.shizuku.Linq;
 using __Action = net.yarukizero.vrchat.shizuku.Linq.Actions.VrcAction;
 using __ActionRecord = net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord;
 using __ConditionRecord = net.yarukizero.vrchat.shizuku.Linq.Conditions.ConditionRecord;
+using System.IO;
 
 namespace net.yarukizero.vrchat.shizuku.editor {
     internal static class InternalExtension {
+        public static ParameterSyncType ToMaType(this VrcType @this) {
+            switch(@this) {
+            case VrcType.Bool:
+                return ParameterSyncType.Bool;
+            case VrcType.Int:
+                return ParameterSyncType.Int;
+            case VrcType.Float:
+                return ParameterSyncType.Float;
+            default:
+                throw new InvalidDataException();
+            }
+        }
+
         public static VRCAvatarParameterDriver CreateDriver(this IResultStage @this) {
             var d = ScriptableObject.CreateInstance<VRCAvatarParameterDriver>();
             d.parameters = @this.Actions.Select(x => x.ToDriverParameter()).ToList();

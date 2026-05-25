@@ -9,6 +9,17 @@
     <OutputPath>$(MSBuildProjectDirectory)\.csproj\bin\</OutputPath>
     <BaseIntermediateOutputPath>$(MSBuildProjectDirectory)\.csproj\obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="obj\**" />
+    <EmbeddedResource Remove="obj\**" />
+    <None Remove="obj\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Linq\ShizukuHost.Parameterizable.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ShizukuHost.Parameterizable.cs" />
+  </ItemGroup>
 
   <ItemGroup>
 	  <None Update="**\\**.meta" Visible="false" />

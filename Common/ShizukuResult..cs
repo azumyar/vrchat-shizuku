@@ -9,28 +9,36 @@ using __ActionRecord = net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord;
 
 namespace net.yarukizero.vrchat.shizuku {
     public interface IResultStage {
-        IEnumerable<IEnumerable<__ConditionsRecord>> Or { get; }
+		string Name { get; }
+		bool IsLocalOnly { get; }
+		IEnumerable<IEnumerable<__ConditionsRecord>> Or { get; }
         IEnumerable<__ActionRecord> Actions { get; }
-        bool IsLocalOnly { get; }
     }
 
     public class ShizukuResult {
         class Stage : IResultStage {
+			public string Name { get; }
             public IEnumerable<IEnumerable<__ConditionsRecord>> Or { get; }
             public IEnumerable<__ActionRecord> Actions { get; }
         /// <summary>シーケンスをローカルで実行するか否か</summary>
             public bool IsLocalOnly { get; }
-            public Stage(SequenceStage stage, ShizukuHost host) {
+            public Stage(SequenceStage stage, ITransitionHost host) {
                 this.Or = stage.CompileOr();
                 this.Actions = stage.CompileActions();
+				this.Name = stage.Name;
                 this.IsLocalOnly = stage.IsLocalOnly ?? host.IsLocalOnly;
             }
         }
         /// <summary>使用する変数一覧</summary>
         public IEnumerable<IVrcParameter> Parameters { get; }
         public IEnumerable<IResultStage> Stages { get; }
+		public string SequenceName { get; }
+		public string TargetStage { get; }
 
-        internal ShizukuResult(ShizukuSequence sequence) {
+
+		internal ShizukuResult(ShizukuSequence sequence) {
+			this.SequenceName = sequence.Name;
+			this.TargetStage = sequence.TargetStage;
             this.Stages = sequence.Stages.Select(x => new Stage(x, sequence.Host))
                 .ToList()
                 .AsReadOnly();

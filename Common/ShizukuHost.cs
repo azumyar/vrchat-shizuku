@@ -1,65 +1,38 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 
 using net.yarukizero.vrchat.shizuku.Linq;
 
-using __ConditionsParam = net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuParam;
-using __ActionParam= net.yarukizero.vrchat.shizuku.Linq.Actions.ShizukuParam;
-
 namespace net.yarukizero.vrchat.shizuku {
-    public class ShizukuHost : IShizukuStore<__ConditionsParam>, IShizukuStore<__ActionParam> {
-        // パラメータリスト返却用interface実装してるだけのクラス
-        class Param: IVrcParameter {
-            public string Name { get; }
-            public VrcType Type { get; }
+	public interface IHostEnviroment {
+		IEnumerable<(string Name, VrcType Type)> GetParameter();
+	}
 
-            public Param((string Name, VrcType Type) arg) {
-                this.Name = arg.Name;
-                this.Type = arg.Type;
-            }
-        }
+	public interface IShizukuHost {
+		bool IsLocalOnly { get; }
+	}
 
-        public bool IsLocalOnly { get; }
-        private Dictionary<string, (string Name, VrcType Type)> dic = new();
+	public partial class ShizukuHost {
+		private readonly bool isLocalOnly;
 
-        __ConditionsParam IShizukuStore<__ConditionsParam>.this[string name] {
-            get {
-                if(!this.dic.TryGetValue(name, out var r)) {
-                    throw new InvalidOperationException($"{name}はVRCで定義されていません");
-                }
-                return new(r.Name, r.Type);
-            }
-        } 
+		private IHostEnviroment Enviroment { get; }
 
-        __ActionParam IShizukuStore<__ActionParam>.this[string name] {
-            get {
-                if(!this.dic.TryGetValue(name, out var r)) {
-                    throw new InvalidOperationException($"{name}はVRCで定義されていません");
-                }
-                return new(r.Name, r.Type);
-            }
-        } 
+		bool IShizukuHost.IsLocalOnly {
+			get {
+				return false;
+			}
+		}
+		public ShizukuHost(IShizuku template, IHostEnviroment env) {
+			this.Enviroment = env;
+			this.isLocalOnly = template.IsLocalOnly;
+			InitSequence(template, env);
 
-        public ShizukuHost(IShizuku a, IEnumerable<(string Name, VrcType Type)> @params) {
-            this.IsLocalOnly = a.IsLocalOnly;
-            foreach(var it in @params) {
-                this.dic.Add(it.Name, it);
-            }
-        }
+		}
 
-        /// <summary>
-        /// HOSTが管理しているVRCパラメータの一覧を取得
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<IVrcParameter> GetParameter() {
-            foreach(var it in this.dic.Keys) {
-                if(this.dic.TryGetValue(it, out var v)) {
-                    yield return new Param(v);
-                }
-            }
-        }
-    }
+		partial void InitSequence(IShizuku template, IHostEnviroment env);
+	}
 }

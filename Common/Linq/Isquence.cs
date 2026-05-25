@@ -25,6 +25,7 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
     internal interface ICombineStore : IShizukuStore<__ConditionParam>, IShizukuStore<__ActionParam> {}
 
     public interface ISequence {
+		void SetName(string name);
         void SetLocalOnly(bool localOnly);
     }
 
@@ -94,35 +95,45 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
         }
 
 
-
-        private SequenceStage currentStage;
+		public string Name { get; }
+		public string TargetStage { get; }
+		private SequenceStage currentStage;
         private readonly List<SequenceStage> stages = new();
         private Dictionary<string, (string Name, VrcType Type, float? Default)> localVal = new();
 
         private SequenceStage CurrentStage {
             get {
-                this.currentStage ??= new SequenceStage(this.Store);
+				//this.currentStage ??= new SequenceStage(this.Store);
+				if(this.currentStage == null) {
+					this.currentStage = new SequenceStage(this.Store);
+				}
                 return this.currentStage;
             }
         }
 
         internal ICombineStore Store { get; }
-        internal ShizukuHost Host { get; }
+        internal ITransitionHost Host { get; }
         internal IEnumerable<SequenceStage> Stages {
              get {
                 return this.stages.AsReadOnly();
             }
         }
 
-        internal ShizukuSequence(ShizukuHost host) {
+        internal ShizukuSequence(ITransitionHost host, string sequenceName, string targetStage) {
             this.Store = new CombineStore(this);
             this.Host = host;
-        }
+			this.Name = sequenceName;
+			this.TargetStage = targetStage;
+		}
 
         internal ShizukuSequence SetLocalValiable(string name, VrcType type, float? defaultVal) {
             this.localVal.Add(name, (name, type, defaultVal));
             return this;
         }
+
+		public void SetName(string name) {
+			this.CurrentStage.Name = name;
+		}
 
         public void SetLocalOnly(bool localOnly) {
             this.CurrentStage.IsLocalOnly = localOnly;
@@ -166,6 +177,7 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
         internal readonly List<__ConditionExp> Or = new();
         internal readonly List<__ActionExp> Actions = new();
         public bool? IsLocalOnly { get; set; }
+		public string Name { get; set; }
 
         public SequenceStage(
             ICombineStore store) {

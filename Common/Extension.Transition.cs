@@ -20,12 +20,19 @@ using __ActionExp = System.Linq.Expressions.Expression<
 		net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord>>;
 
 namespace net.yarukizero.vrchat.shizuku {
-    public static class  Extension {
+    public static partial class  Extension {
         /// <summary>新規シーケンスを開始</summary>
         /// <param name="this"></param>
         /// <returns></returns>
-        public static IConditonSequence Entry(this ShizukuHost @this) {
-            return new ShizukuSequence(@this);
+        public static IConditonSequence Entry(
+			this ITransitionHost @this,
+			string sequenceName=null,
+			string targetStage=null) {
+
+            return new ShizukuSequence(
+				@this,
+				sequenceName: sequenceName,
+				targetStage: targetStage);
         }
 
         // 仮置き
@@ -49,6 +56,11 @@ namespace net.yarukizero.vrchat.shizuku {
             return @this.SetLocalValiable(name, VrcType.Float, default);
         }
 
+
+		public static T Name<T>(this T @this, string name) where T: ISequence {
+			@this.SetName(name);
+			return @this;
+		}
 
 		/// <summary>条件を設定(ラムダ式に変数を指定した場合式を評価時点の値が使用されます)</summary>
 		/// <param name="this"></param>
