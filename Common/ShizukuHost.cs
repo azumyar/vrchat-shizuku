@@ -23,7 +23,7 @@ namespace net.yarukizero.vrchat.shizuku {
 
 		bool IShizukuHost.IsLocalOnly {
 			get {
-				return false;
+				return this.isLocalOnly;
 			}
 		}
 		public ShizukuHost(IShizuku template, IHostEnviroment env) {
