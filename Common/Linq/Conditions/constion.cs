@@ -25,7 +25,12 @@ namespace net.yarukizero.vrchat.shizuku.Linq.Conditions {
             this.Type = type;
         }
 
-        public static ShizukuCondition operator ==(ShizukuParam a, bool b) { return OpBool(a, b, ShizukuOprator.Equals); }
+		public ShizukuParam(IStoredVrcParameter param) {
+			this.Name = param.Name;
+			this.Type = param.Type;
+		}
+
+		public static ShizukuCondition operator ==(ShizukuParam a, bool b) { return OpBool(a, b, ShizukuOprator.Equals); }
         public static ShizukuCondition operator !=(ShizukuParam a, bool b) { return OpBool(a, b, ShizukuOprator.NotEquals); }
 
         public static ShizukuCondition operator ==(ShizukuParam a, int b) { return OpInt(a, b, ShizukuOprator.Equals); }

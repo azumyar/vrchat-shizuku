@@ -29,8 +29,13 @@ namespace net.yarukizero.vrchat.shizuku {
         VrcType Type { get; }
     }
 
-    /// <summary>VRCパラメータ型</summary>
-    public enum VrcType {
+	public interface IStoredVrcParameter : IVrcParameter {
+		//float OriginalValue { get; }
+		bool IsWrite { get; }
+	}
+
+	/// <summary>VRCパラメータ型</summary>
+	public enum VrcType {
         Bool,
         Int,
         Float,
