@@ -23,18 +23,25 @@ namespace net.yarukizero.vrchat.shizuku {
 			}
 		}
 
-		private Dictionary<string, (string Name, VrcType Type)> dic = new();
+		private readonly List<IStoredVrcParameter> _definedParams = new();
 
 		__ConditionsParam IShizukuStore<__ConditionsParam>.this[string name] {
 			get {
+				var dp = this._definedParams
+					.Where(x => x.Name == name)
+					.FirstOrDefault();
+				if(dp != null) {
+					return new(dp);
+				}
+
 				var v = ((IDependencyHost)this).GetParameter()
 					.Where(x => x.Name == name)
 					.FirstOrDefault();
-				if(v == null) {
-					throw new InvalidOperationException($"{name}はVRCで定義されていません");
+				if(v != null) {
+					return new(v.Name, v.Type);
 				}
+				throw new InvalidOperationException($"{name}はVRCで定義されていません");
 
-				return new(v.Name, v.Type);
 			}
 		}
 
@@ -51,7 +58,9 @@ namespace net.yarukizero.vrchat.shizuku {
 			}
 		}
 
-		partial void InitDependency(IShizuku template, IHostEnviroment env) {}
+		partial void InitDependency(IShizuku template, IHostEnviroment env) {
+			this._definedParams.AddRange(DefinedVrcParameter.GetDefinedVrcParams());
+		}
 
 		/// <summary>
 		/// HOSTが管理しているVRCパラメータの一覧を取得
