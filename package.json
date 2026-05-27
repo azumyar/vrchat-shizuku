@@ -9,8 +9,8 @@
   },
   "license": "MIT",
   "url" : "https://github.com/azumyar/vrchat-shizuku.git",
-  "documentationUrl": "",
-  "changelogUrl": "",
+  "documentationUrl": null,
+  "changelogUrl": null,
   "unity": "2022.3",
   "vpmDependencies": {
     "nadena.dev.modular-avatar": ">=1.9.10"
