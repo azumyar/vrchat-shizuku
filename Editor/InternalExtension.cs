@@ -35,7 +35,10 @@ namespace net.yarukizero.vrchat.shizuku.editor {
 
         public static VRCAvatarParameterDriver CreateDriver(this IResultStage @this) {
             var d = ScriptableObject.CreateInstance<VRCAvatarParameterDriver>();
-            d.parameters = @this.Actions.Select(x => x.ToDriverParameter()).ToList();
+            d.parameters = @this.Actions
+                .Where(x => x.Action != __Action.Nop)
+                .Select(x => x.ToDriverParameter())
+                .ToList();
             d.localOnly = @this.IsLocalOnly;
             return d;
         }

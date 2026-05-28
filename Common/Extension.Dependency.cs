@@ -18,6 +18,7 @@ using __ActionExp = System.Linq.Expressions.Expression<
 		net.yarukizero.vrchat.shizuku.IShizukuStore<
 			net.yarukizero.vrchat.shizuku.Linq.Actions.ShizukuParam>,
 		net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord>>;
+using net.yarukizero.vrchat.shizuku.Linq.Actions;
 
 namespace net.yarukizero.vrchat.shizuku {
     public static partial class  Extension {
@@ -85,7 +86,16 @@ namespace net.yarukizero.vrchat.shizuku {
             return @this;
         }
 
-        public static IActionSequence Action(this IConditonSequence @this, __ActionExp exp) {
+		public static IActionSequence Nop(this IConditonSequence @this) {
+			return @this.ToAction().Nop();
+		}
+
+		public static IActionSequence Nop(this IActionSequence @this) {
+			@this.AddAction(x => ActionRecord.Nop());
+			return @this;
+		}
+
+		public static IActionSequence Action(this IConditonSequence @this, __ActionExp exp) {
             return @this.ToAction().Action(exp);
         }
 
@@ -96,8 +106,9 @@ namespace net.yarukizero.vrchat.shizuku {
             return @this;
         }
 
-        public static DependencyResult Result(this IActionSequence @this) {
-            return @this.ToResult();
+        public static DependencyResult Result(this IActionSequence @this, string targetStage=null) {
+            return @this.ToResult(
+				targetStage: targetStage);
         }
 
         /*

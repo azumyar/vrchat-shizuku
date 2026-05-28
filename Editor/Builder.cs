@@ -13,6 +13,7 @@ using net.yarukizero.vrchat.shizuku.runtime;
 
 using @ref = System.Reflection;
 using net.yarukizero.vrchat.shizuku.Linq;
+using UnityEditor.SceneManagement;
 
 namespace net.yarukizero.vrchat.shizuku.editor {
     internal class Builder {
@@ -128,6 +129,7 @@ namespace net.yarukizero.vrchat.shizuku.editor {
             public string Name { get; }
             public AnimatorControllerLayer Layer { get; }
             public AnimatorState Idle { get; }
+            public Dictionary<string, NamedState> Stages { get; } = new();
 
             public NamedLayer (string name, AnimatorControllerLayer layer, AnimatorState idle) {
                 this.Name = name;
@@ -152,29 +154,21 @@ namespace net.yarukizero.vrchat.shizuku.editor {
         }
         private static void Apply(IEnumerable<DependencyResult> entries, AnimatorController animator, AnimationClip clip) {
             var namedLayers = new Dictionary<string, NamedLayer>();
-            var dic = new Dictionary<string, NamedState>();
+            //var dic = new Dictionary<string, NamedState>();
 
             foreach(var it in entries.Select((x, i) => (Index: i, Value: x))) {
+                var currentLayer = default(NamedLayer);
                 AnimatorControllerLayer layer;
                 AnimatorState idle;
                 AnimatorState last;
                 if(!string.IsNullOrEmpty(it.Value.SequenceName)) {
                     if(namedLayers.TryGetValue(it.Value.SequenceName, out var val)) {
+                        currentLayer = val;
                         layer = val.Layer;
                         idle = val.Idle;
                         last = val.Idle;
                         goto start;
                     }
-                }
-
-                if(!string.IsNullOrEmpty(it.Value.TargetStage)) {
-                    if(!dic.TryGetValue(it.Value.TargetStage, out var target)) {
-                        throw new InvalidOperationException($"Stage[{it.Value.TargetStage}]は定義されていません");
-                    }
-                    layer = target.Layer;
-                    idle = target.Idle;
-                    last = target.Active;
-                    goto start;
                 }
 
                 {
@@ -188,17 +182,38 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                     layer.defaultWeight = 1f;
                     layer.stateMachine.defaultState = idle;
                     if(hasName) {
-                        namedLayers.Add(layerSuffix, new(layerName, layer, idle));
+                        currentLayer = new(layerName, layer, idle);
+                        namedLayers.Add(layerSuffix, currentLayer);
                     }
                 }
             start:
+                AnimatorState transactionTarget = idle;
+                if(!string.IsNullOrEmpty(it.Value.StartStage)) {
+                    if(currentLayer != null) {
+                        if(!currentLayer.Stages.TryGetValue(it.Value.StartStage, out var target)) {
+                            throw new InvalidOperationException($"Stage[{it.Value.StartStage}]は定義されていません");
+                        }
+                        last = target.Active;
+                    }
+                }
+                if(!string.IsNullOrEmpty(it.Value.EndStage)) {
+                    if(currentLayer != null) {
+                        if(!currentLayer.Stages.TryGetValue(it.Value.StartStage, out var target)) {
+                            throw new InvalidOperationException($"Stage[{it.Value.StartStage}]は定義されていません");
+                        }
+                        transactionTarget = target.Active;
+                    }
+                }
+
 
                 foreach(var stage in it.Value.Stages.Select((x, i) => (Index: i, Value: x))) {
                     var hasName = !string.IsNullOrEmpty(stage.Value.Name);
                     var stageName = hasName ? stage.Value.Name : $"stage-{it.Index}-{stage.Index}";
                     var active = layer.stateMachine.NewState(stageName, clip);
-                    if(hasName) {
-                        dic.Add(stageName, new NamedState(stageName, layer, idle, active));
+                    if((currentLayer != null) && hasName) {
+                        currentLayer.Stages.Add(
+                            stageName,
+                            new(stageName, layer, idle, active));
                     }
 
                     active.behaviours = new StateMachineBehaviour[] {
@@ -217,8 +232,8 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                     }
                     last = active;
                 }
-                if(!object.ReferenceEquals(idle, last)) {
-                    last.AddTransition(idle).ToFree();
+                if(!object.ReferenceEquals(transactionTarget, last)) {
+                    last.AddTransition(transactionTarget).ToFree();
                 }
             }
         }

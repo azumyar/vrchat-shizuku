@@ -39,7 +39,7 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
     public interface IActionSequence : ISequence {
         void AddAction(__ActionExp action);
         IConditonSequence ToNext();
-        DependencyResult ToResult();
+        DependencyResult ToResult(string targetStage);
     }
 
     public enum ShizukuOprator {
@@ -158,9 +158,9 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
             return this;
         }
 
-        public DependencyResult ToResult() {
+        public DependencyResult ToResult(string targetStage) {
             this.Staging();
-            return new(this);
+            return new(this, endStage: targetStage);
         }
 
         private void Staging() {

@@ -51,12 +51,14 @@ namespace net.yarukizero.vrchat.shizuku {
         public IEnumerable<IVrcParameter> Parameters { get; }
         public IEnumerable<IResultStage> Stages { get; }
 		public string SequenceName { get; }
-		public string TargetStage { get; }
+		public string StartStage { get; }
+		public string EndStage { get; }
 
 
-		internal DependencyResult(DependencySequence sequence) {
+		internal DependencyResult(DependencySequence sequence, string endStage=null) {
 			this.SequenceName = sequence.Name;
-			this.TargetStage = sequence.TargetStage;
+			this.StartStage = sequence.TargetStage;
+			this.EndStage = endStage;
             this.Stages = sequence.Stages.Select(x => new Stage(x, sequence.Host))
                 .ToList()
                 .AsReadOnly();

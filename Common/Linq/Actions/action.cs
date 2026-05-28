@@ -5,13 +5,20 @@ using System.Linq.Expressions;
 
 namespace net.yarukizero.vrchat.shizuku.Linq.Actions {
     public enum VrcAction {
+		Nop,
         Set,
         Add,
         Random,
 		Copy,
     }
     public class ActionRecord {
-        public IVrcParameter Param { get; }
+		private class NopParameter : IVrcParameter {
+			public string Name => "__nop__";
+			public VrcType Type => VrcType.Float;
+		}
+
+
+		public IVrcParameter Param { get; }
         public VrcAction Action { get; }
         public float Value { get; }
 
@@ -20,7 +27,9 @@ namespace net.yarukizero.vrchat.shizuku.Linq.Actions {
             this.Action = action;
             this.Value = value;
         }
-    }
+
+		public static ActionRecord Nop() => new ActionRecord(new NopParameter(), VrcAction.Nop, 0f);
+	}
 
     public class ShizukuParam : IVrcParameter {
         public string Name { get; }
