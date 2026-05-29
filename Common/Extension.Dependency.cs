@@ -1,24 +1,38 @@
 
+using net.yarukizero.vrchat.shizuku.Linq;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using net.yarukizero.vrchat.shizuku.Linq;
-
-using __ConditionsParam = net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuParam;
-using __ConditionsRecord = net.yarukizero.vrchat.shizuku.Linq.Conditions.ConditionRecord;
-
-using __ConditionExp = System.Linq.Expressions.Expression<
-	System.Func<
-		net.yarukizero.vrchat.shizuku.IShizukuStore<
-			net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuParam>,
-		net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuCondition>>;
 using __ActionExp = System.Linq.Expressions.Expression<
 	System.Func<
 		net.yarukizero.vrchat.shizuku.IShizukuStore<
 			net.yarukizero.vrchat.shizuku.Linq.Actions.ShizukuParam>,
 		net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord>>;
-using net.yarukizero.vrchat.shizuku.Linq.Actions;
+using __ConditionExp = System.Linq.Expressions.Expression<
+	System.Func<
+		net.yarukizero.vrchat.shizuku.IShizukuStore<
+			net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuParam>,
+		net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuCondition>>;
+using __ConditionsNext = net.yarukizero.vrchat.shizuku.Linq.Conditions.NextStage;
+using __ConditionsParam = net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuParam;
+using __ConditionsRecord = net.yarukizero.vrchat.shizuku.Linq.Conditions.ConditionRecord;
+using __ActionRecord = net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord;
+
+using __ConditionExpEnumerable = System.Collections.Generic.IEnumerable<
+    System.Linq.Expressions.Expression<
+        System.Func<
+            net.yarukizero.vrchat.shizuku.IShizukuStore<
+                net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuParam>,
+            net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuCondition>>>;
+using __ActionExpEnumerable = System.Collections.Generic.IEnumerable<
+    System.Linq.Expressions.Expression<
+        System.Func<
+            net.yarukizero.vrchat.shizuku.IShizukuStore<
+                net.yarukizero.vrchat.shizuku.Linq.Actions.ShizukuParam>,
+            net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord>>>;
+
 
 namespace net.yarukizero.vrchat.shizuku {
     public static partial class  Extension {
@@ -37,8 +51,9 @@ namespace net.yarukizero.vrchat.shizuku {
         }
 
         // 仮置き
-        public static IConditonSequence Entry(this IActionSequence @this) {
-            return @this.ToNext();
+        public static IConditonSequence Entry(this IActionSequence @this, string targetStage = null) {
+            return @this.ToNext(
+				targetStage: targetStage);
         }
 
         // 仮置き
@@ -91,7 +106,7 @@ namespace net.yarukizero.vrchat.shizuku {
 		}
 
 		public static IActionSequence Nop(this IActionSequence @this) {
-			@this.AddAction(x => ActionRecord.Nop());
+			@this.AddAction(x => __ActionRecord.Nop());
 			return @this;
 		}
 
@@ -106,9 +121,12 @@ namespace net.yarukizero.vrchat.shizuku {
             return @this;
         }
 
-        public static DependencyResult Result(this IActionSequence @this, string targetStage=null) {
+        public static DependencyResult Result(
+			this IActionSequence @this,
+			Func<__ConditionsNext.Builder, __ConditionsNext> nextStage=null) {
+
             return @this.ToResult(
-				targetStage: targetStage);
+				transactStage: nextStage?.Invoke(new()));
         }
 
         /*
@@ -128,6 +146,71 @@ namespace net.yarukizero.vrchat.shizuku {
         }
         */
 
+
+        // テスト中
+        public static IEnumerable<DependencyResult> __Helper(
+			this IDependencyHost @this,
+			string sequenceName,
+            (__ConditionExp Condition, __ActionExp Action) forward,
+            (__ConditionExp Condition, __ActionExp Action) reverse) {
+            
+            return @this.__Helper(
+                sequenceName: sequenceName,
+                forward: (new __ConditionExp[] { forward.Condition }, new __ActionExp[] { forward.Action }),
+                reverse: (new __ConditionExp[] { reverse.Condition }, new __ActionExp[] { reverse.Action })
+            );
+        }
+
+
+        // テスト中
+        public static IEnumerable<DependencyResult> __Helper(
+			this IDependencyHost @this,
+			string sequenceName,
+            (__ConditionExpEnumerable Condition, __ActionExpEnumerable Action) forward,
+            (__ConditionExpEnumerable Condition, __ActionExpEnumerable Action) reverse) {
+
+            var active = $"{sequenceName}.active";
+            var diactive = $"{sequenceName}.diactive";
+            var toAct = @this.Entry(sequenceName: sequenceName)
+                    .Name(active);
+            var toDict = @this.Entry(sequenceName: sequenceName)
+                    .Name(diactive);
+            var act2Diact = @this.Entry(sequenceName: sequenceName, targetStage: active)
+                    .Name(diactive);
+            var diact2Act = @this.Entry(sequenceName: sequenceName, targetStage: diactive)
+                    .Name(active);
+            var actAct = default(IActionSequence);
+            var diactAct = default(IActionSequence);
+            foreach(var it in forward.Condition) {
+                toAct = toAct.Condition(it);
+                diact2Act = diact2Act.Condition(it);
+            }
+            foreach(var it in reverse.Condition) {
+                toDict = toDict.Condition(it);
+                act2Diact = act2Diact.Condition(it);
+            }
+            foreach(var it in forward.Action) {
+                if(actAct == null) {
+                    actAct = toAct.Action(it);
+                } else {
+                    actAct = actAct.Action(it);                    
+                }
+            }
+            foreach(var it in reverse.Action) {
+                if(diactAct == null) {
+                    diactAct = toDict.Action(it);
+                } else {
+                    diactAct = diactAct.Action(it);                    
+                }
+            }
+
+            return new DependencyResult[] {
+                actAct.Result(nextStage: b => b.End().Build()),
+                diactAct.Result(nextStage: b => b.End().Build()),
+                act2Diact.Nop().Result(nextStage: b => b.End().Build()),
+                diact2Act.Nop().Result(nextStage: b => b.End().Build()),
+            };
+        }
 
 
         private static void ThrowIf<T>(bool condition, Expression exp=null) where T : Exception {

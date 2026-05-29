@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using net.yarukizero.vrchat.shizuku.Linq;
 
 using __ConditionsRecord = net.yarukizero.vrchat.shizuku.Linq.Conditions.ConditionRecord;
+using __ConditionsNext = net.yarukizero.vrchat.shizuku.Linq.Conditions.NextStage;
 using __ActionRecord = net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord;
 
 namespace net.yarukizero.vrchat.shizuku {
@@ -52,13 +53,19 @@ namespace net.yarukizero.vrchat.shizuku {
         public IEnumerable<IResultStage> Stages { get; }
 		public string SequenceName { get; }
 		public string StartStage { get; }
-		public string EndStage { get; }
+		public bool IsTransactEndStage { get; }
+		public __ConditionsNext EndStage { get; }
 
 
-		internal DependencyResult(DependencySequence sequence, string endStage=null) {
+		internal DependencyResult(
+			DependencySequence sequence,
+			bool? transactFirst=null,
+			__ConditionsNext endStage =null) {
+
 			this.SequenceName = sequence.Name;
 			this.StartStage = sequence.TargetStage;
-			this.EndStage = endStage;
+			this.IsTransactEndStage = transactFirst.HasValue ? transactFirst.Value : false;
+			this.EndStage = endStage ?? __ConditionsNext.Idle();
             this.Stages = sequence.Stages.Select(x => new Stage(x, sequence.Host))
                 .ToList()
                 .AsReadOnly();

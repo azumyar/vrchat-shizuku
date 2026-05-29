@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace net.yarukizero.vrchat.shizuku.Linq.Conditions {
     public class ConditionRecord {
@@ -99,4 +100,53 @@ namespace net.yarukizero.vrchat.shizuku.Linq.Conditions {
 		public static ShizukuCondition operator &(ShizukuCondition a, ShizukuCondition b) { return new(a, b); }
 		public static ShizukuCondition operator |(ShizukuCondition a, ShizukuCondition b) { throw new NotSupportedException(); }
 	}
+
+	public class NextStage {
+        public class Builder {
+            internal NextIs Next { get; private set; }
+            internal string TargetName { get; private set; }
+            internal Builder() {
+                this.Next = NextIs.Idle;
+            }
+
+            public Builder End() {
+                this.Next = NextIs.None;
+                return this;
+            }
+            public Builder Idle() {
+                this.Next = NextIs.Idle;
+                return this;
+            }
+
+            public Builder Name(string targetName) {
+                this.TargetName = targetName;
+                this.Next = NextIs.Name;
+                return this;
+            }
+
+            public NextStage Build() {
+                if((this.Next == NextIs.Name) && string.IsNullOrEmpty(this.TargetName)) {
+                    throw new InvalidOperationException();
+                }
+                return new(this.Next, this.TargetName);
+            }
+        }
+
+		public enum NextIs {
+			None,
+			Idle,
+			Name,
+		}
+
+		public NextIs Next { get; }
+		public string Name { get; }
+
+		public NextStage(NextIs next, string name) {
+			this.Next = next;
+			this.Name = name;
+		}
+
+        public static NextStage Idle() => new(NextIs.Idle, null);
+	}
+
 }

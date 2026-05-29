@@ -7,6 +7,7 @@ using net.yarukizero.vrchat.shizuku;
 
 using __ConditionParam = net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuParam;
 using __ConditionRecord = net.yarukizero.vrchat.shizuku.Linq.Conditions.ConditionRecord;
+using __ConditionsNext = net.yarukizero.vrchat.shizuku.Linq.Conditions.NextStage;
 using __ActionParam = net.yarukizero.vrchat.shizuku.Linq.Actions.ShizukuParam;
 using __ActionRecord = net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord;
 
@@ -38,8 +39,8 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
 
     public interface IActionSequence : ISequence {
         void AddAction(__ActionExp action);
-        IConditonSequence ToNext();
-        DependencyResult ToResult(string targetStage);
+        IConditonSequence ToNext(string targetStage);
+        DependencyResult ToResult(__ConditionsNext transactStage);
     }
 
     public enum ShizukuOprator {
@@ -153,14 +154,17 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
             this.CurrentStage.Actions.Add(action);
         }
 
-        public IConditonSequence ToNext() {
+        public IConditonSequence ToNext(string targetStage) {
             this.Staging();
+			this.CurrentStage.Name = targetStage;
             return this;
         }
 
-        public DependencyResult ToResult(string targetStage) {
+        public DependencyResult ToResult(__ConditionsNext transactStage) {
             this.Staging();
-            return new(this, endStage: targetStage);
+            return new(
+				this,
+				endStage: transactStage);
         }
 
         private void Staging() {
