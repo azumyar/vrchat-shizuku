@@ -7,9 +7,9 @@ using net.yarukizero.vrchat.shizuku;
 
 using __ConditionParam = net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuParam;
 using __ConditionRecord = net.yarukizero.vrchat.shizuku.Linq.Conditions.ConditionRecord;
-using __ConditionsNext = net.yarukizero.vrchat.shizuku.Linq.Conditions.NextStage;
 using __ActionParam = net.yarukizero.vrchat.shizuku.Linq.Actions.ShizukuParam;
 using __ActionRecord = net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord;
+using __TransitionDefine = net.yarukizero.vrchat.shizuku.Linq.Conditions.TransitionDefine;
 
 using __ConditionExp = System.Linq.Expressions.Expression<
 	System.Func<
@@ -39,8 +39,8 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
 
     public interface IActionSequence : ISequence {
         void AddAction(__ActionExp action);
-        IConditonSequence ToNext(string targetStage);
-        DependencyResult ToResult(__ConditionsNext transactStage);
+        IConditonSequence ToNext();
+        DependencyResult ToResult(__TransitionDefine transitTo);
     }
 
     public enum ShizukuOprator {
@@ -97,7 +97,7 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
 
 
 		public string Name { get; }
-		public string TargetStage { get; }
+		public __TransitionDefine TransitFrom { get; }
 		private SequenceStage currentStage;
         private readonly List<SequenceStage> stages = new();
         private Dictionary<string, (string Name, VrcType Type, float? Default)> localVal = new();
@@ -120,11 +120,11 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
             }
         }
 
-        internal DependencySequence(IDependencyHost host, string sequenceName, string targetStage) {
+        internal DependencySequence(IDependencyHost host, string sequenceName, __TransitionDefine transitFrom) {
             this.Store = new CombineStore(this);
             this.Host = host;
 			this.Name = sequenceName;
-			this.TargetStage = targetStage;
+			this.TransitFrom = transitFrom;
 		}
 
         internal DependencySequence SetLocalValiable(string name, VrcType type, float? defaultVal) {
@@ -154,17 +154,17 @@ namespace net.yarukizero.vrchat.shizuku.Linq {
             this.CurrentStage.Actions.Add(action);
         }
 
-        public IConditonSequence ToNext(string targetStage) {
+        public IConditonSequence ToNext() {
             this.Staging();
-			this.CurrentStage.Name = targetStage;
             return this;
         }
 
-        public DependencyResult ToResult(__ConditionsNext transactStage) {
+        public DependencyResult ToResult(__TransitionDefine transitNext) {
             this.Staging();
             return new(
 				this,
-				endStage: transactStage);
+                transitFrom: this.TransitFrom,
+				transitTo: transitNext);
         }
 
         private void Staging() {

@@ -15,7 +15,7 @@ using __ConditionExp = System.Linq.Expressions.Expression<
 		net.yarukizero.vrchat.shizuku.IShizukuStore<
 			net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuParam>,
 		net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuCondition>>;
-using __ConditionsNext = net.yarukizero.vrchat.shizuku.Linq.Conditions.NextStage;
+using __TransitionDefine = net.yarukizero.vrchat.shizuku.Linq.Conditions.TransitionDefine;
 using __ConditionsParam = net.yarukizero.vrchat.shizuku.Linq.Conditions.ShizukuParam;
 using __ConditionsRecord = net.yarukizero.vrchat.shizuku.Linq.Conditions.ConditionRecord;
 using __ActionRecord = net.yarukizero.vrchat.shizuku.Linq.Actions.ActionRecord;
@@ -42,18 +42,17 @@ namespace net.yarukizero.vrchat.shizuku {
         public static IConditonSequence Entry(
 			this IDependencyHost @this,
 			string sequenceName=null,
-			string targetStage=null) {
+			Func<__TransitionDefine.Builder, __TransitionDefine> transitFrom=null) {
 
             return new DependencySequence(
 				@this,
 				sequenceName: sequenceName,
-				targetStage: targetStage);
+				transitFrom: transitFrom?.Invoke(new __TransitionDefine.Builder()));
         }
 
         // 仮置き
-        public static IConditonSequence Entry(this IActionSequence @this, string targetStage = null) {
-            return @this.ToNext(
-				targetStage: targetStage);
+        public static IConditonSequence Entry(this IActionSequence @this) {
+            return @this.ToNext();
         }
 
         // 仮置き
@@ -123,10 +122,10 @@ namespace net.yarukizero.vrchat.shizuku {
 
         public static DependencyResult Result(
 			this IActionSequence @this,
-			Func<__ConditionsNext.Builder, __ConditionsNext> nextStage=null) {
+			Func<__TransitionDefine.Builder, __TransitionDefine> transitTo=null) {
 
             return @this.ToResult(
-				transactStage: nextStage?.Invoke(new()));
+				transitTo: transitTo?.Invoke(new()));
         }
 
         /*
@@ -175,9 +174,9 @@ namespace net.yarukizero.vrchat.shizuku {
                     .Name(active);
             var toDict = @this.Entry(sequenceName: sequenceName)
                     .Name(diactive);
-            var act2Diact = @this.Entry(sequenceName: sequenceName, targetStage: active)
+            var act2Diact = @this.Entry(sequenceName: sequenceName, transitFrom: b => b.Name(active).Build())
                     .Name(diactive);
-            var diact2Act = @this.Entry(sequenceName: sequenceName, targetStage: diactive)
+            var diact2Act = @this.Entry(sequenceName: sequenceName, transitFrom: b => b.Name(diactive).Build())
                     .Name(active);
             var actAct = default(IActionSequence);
             var diactAct = default(IActionSequence);
@@ -205,10 +204,10 @@ namespace net.yarukizero.vrchat.shizuku {
             }
 
             return new DependencyResult[] {
-                actAct.Result(nextStage: b => b.End().Build()),
-                diactAct.Result(nextStage: b => b.End().Build()),
-                act2Diact.Nop().Result(nextStage: b => b.End().Build()),
-                diact2Act.Nop().Result(nextStage: b => b.End().Build()),
+                actAct.Result(transitTo: b => b.End().Build()),
+                diactAct.Result(transitTo: b => b.End().Build()),
+                act2Diact.Nop().Result(transitTo: b => b.End().Build()),
+                diact2Act.Nop().Result(transitTo: b => b.End().Build()),
             };
         }
 

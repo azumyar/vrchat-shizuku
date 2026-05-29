@@ -14,7 +14,7 @@ using net.yarukizero.vrchat.shizuku.runtime;
 using @ref = System.Reflection;
 using net.yarukizero.vrchat.shizuku.Linq;
 using UnityEditor.SceneManagement;
-using __NextIs = net.yarukizero.vrchat.shizuku.Linq.Conditions.NextStage.NextIs;
+using __TrasitIs = net.yarukizero.vrchat.shizuku.Linq.Conditions.TransitionDefine.Is;
 
 namespace net.yarukizero.vrchat.shizuku.editor {
     internal class Builder {
@@ -169,13 +169,14 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                         layer = val.Layer;
                         idle = val.Idle;
                         last = val.Idle;
-                        if(string.IsNullOrEmpty(it.Value.StartStage)) {
-                            start = idle;
-                        } else {
-                            if(!val.Stages.TryGetValue(it.Value.StartStage, out var v2)) {
+
+                        if(it.Value.TransitFrom.TargetIs == __TrasitIs.Name) {
+                            if(!val.Stages.TryGetValue(it.Value.TransitFrom.Name, out var v2)) {
                                 throw new InvalidOperationException();
                             }
                             start = v2.Active;
+                        } else {
+                            start = idle;
                         }
                         goto start;
                     }
@@ -197,6 +198,7 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                         namedLayers.Add(layerSuffix, currentLayer);
                     }
                 }
+ 
             start:
                 var transactionTarget = default(AnimatorState);
                 if(!string.IsNullOrEmpty(it.Value.StartStage)) {
@@ -208,16 +210,16 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                     }
                 }
 
-                switch(it.Value.EndStage.Next) {
-                case __NextIs.Idle:
+                switch(it.Value.TransitTo.TargetIs) {
+                case __TrasitIs.Idle:
                     transactionTarget = idle;
                     break;
-                case __NextIs.Name:
+                case __TrasitIs.Name:
                     if(currentLayer == null) {
-                        throw new InvalidOperationException($"Stage[{it.Value.EndStage.Name}]が指定されましたがシーケンス名が未定義です");                        
+                        throw new InvalidOperationException($"Stage[{it.Value.TransitTo.Name}]が指定されましたがシーケンス名が未定義です");                        
                     }
                     if(!currentLayer.Stages.TryGetValue(it.Value.StartStage, out var target)) {
-                        throw new InvalidOperationException($"Stage[{it.Value.EndStage.Name}]は定義されていません");
+                        throw new InvalidOperationException($"Stage[{it.Value.TransitTo.Name}]は定義されていません");
                     }
                     transactionTarget = target.Active;
                     break;

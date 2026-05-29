@@ -101,52 +101,52 @@ namespace net.yarukizero.vrchat.shizuku.Linq.Conditions {
 		public static ShizukuCondition operator |(ShizukuCondition a, ShizukuCondition b) { throw new NotSupportedException(); }
 	}
 
-	public class NextStage {
+	public class TransitionDefine {
         public class Builder {
-            internal NextIs Next { get; private set; }
+            internal Is TargetIs { get; private set; }
             internal string TargetName { get; private set; }
             internal Builder() {
-                this.Next = NextIs.Idle;
+                this.TargetIs = Is.Idle;
             }
 
             public Builder End() {
-                this.Next = NextIs.None;
+                this.TargetIs = Is.None;
                 return this;
             }
             public Builder Idle() {
-                this.Next = NextIs.Idle;
+                this.TargetIs = Is.Idle;
                 return this;
             }
 
             public Builder Name(string targetName) {
                 this.TargetName = targetName;
-                this.Next = NextIs.Name;
+                this.TargetIs = Is.Name;
                 return this;
             }
 
-            public NextStage Build() {
-                if((this.Next == NextIs.Name) && string.IsNullOrEmpty(this.TargetName)) {
+            public TransitionDefine Build() {
+                if((this.TargetIs == Is.Name) && string.IsNullOrEmpty(this.TargetName)) {
                     throw new InvalidOperationException();
                 }
-                return new(this.Next, this.TargetName);
+                return new(this.TargetIs, this.TargetName);
             }
         }
 
-		public enum NextIs {
+        public enum Is {
 			None,
 			Idle,
 			Name,
 		}
 
-		public NextIs Next { get; }
+
+		public Is TargetIs { get; }
 		public string Name { get; }
 
-		public NextStage(NextIs next, string name) {
-			this.Next = next;
+		public TransitionDefine(Is targetIs, string name) {
+			this.TargetIs = targetIs;
 			this.Name = name;
 		}
 
-        public static NextStage Idle() => new(NextIs.Idle, null);
+        public static TransitionDefine Idle() => new(Is.Idle, null);
 	}
-
 }
