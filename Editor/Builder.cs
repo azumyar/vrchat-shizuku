@@ -162,13 +162,11 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                 AnimatorControllerLayer layer;
                 AnimatorState idle;
                 AnimatorState start;
-                AnimatorState last;
                 if(!string.IsNullOrEmpty(it.Value.SequenceName)) {
                     if(namedLayers.TryGetValue(it.Value.SequenceName, out var val)) {
                         currentLayer = val;
                         layer = val.Layer;
                         idle = val.Idle;
-                        last = val.Idle;
 
                         if(it.Value.TransitFrom.TargetIs == __TrasitIs.Name) {
                             if(!val.Stages.TryGetValue(it.Value.TransitFrom.Name, out var v2)) {
@@ -190,7 +188,6 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                     layer = animator.layers.Last();
                     idle = layer.stateMachine.NewState("idle", clip);
                     start = idle;
-                    last = idle;
                     layer.defaultWeight = 1f;
                     layer.stateMachine.defaultState = idle;
                     if(hasName) {
@@ -200,28 +197,20 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                 }
  
             start:
-                var transactionTarget = default(AnimatorState);
-                if(!string.IsNullOrEmpty(it.Value.StartStage)) {
-                    if(currentLayer != null) {
-                        if(!currentLayer.Stages.TryGetValue(it.Value.StartStage, out var target)) {
-                            throw new InvalidOperationException($"Stage[{it.Value.StartStage}]は定義されていません");
-                        }
-                        last = target.Active;
-                    }
-                }
-
+                AnimatorState last = start;
+                var transitTarget = default(AnimatorState);
                 switch(it.Value.TransitTo.TargetIs) {
                 case __TrasitIs.Idle:
-                    transactionTarget = idle;
+                    transitTarget = idle;
                     break;
                 case __TrasitIs.Name:
                     if(currentLayer == null) {
                         throw new InvalidOperationException($"Stage[{it.Value.TransitTo.Name}]が指定されましたがシーケンス名が未定義です");                        
                     }
-                    if(!currentLayer.Stages.TryGetValue(it.Value.StartStage, out var target)) {
+                    if(!currentLayer.Stages.TryGetValue(it.Value.TransitTo.Name, out var target)) {
                         throw new InvalidOperationException($"Stage[{it.Value.TransitTo.Name}]は定義されていません");
                     }
-                    transactionTarget = target.Active;
+                    transitTarget = target.Active;
                     break;
                 }
 
@@ -258,8 +247,8 @@ namespace net.yarukizero.vrchat.shizuku.editor {
                     }
                     last = active;
                 }
-                if(!object.ReferenceEquals(transactionTarget, null) && !object.ReferenceEquals(transactionTarget, last)) {
-                    last.AddTransition(transactionTarget).ToFree();
+                if(!object.ReferenceEquals(transitTarget, null) && !object.ReferenceEquals(transitTarget, last)) {
+                    last.AddTransition(transitTarget).ToFree();
                 }
             }
         }

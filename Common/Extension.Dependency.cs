@@ -168,8 +168,8 @@ namespace net.yarukizero.vrchat.shizuku {
             (__ConditionExpEnumerable Condition, __ActionExpEnumerable Action) forward,
             (__ConditionExpEnumerable Condition, __ActionExpEnumerable Action) reverse) {
 
-            var active = $"{sequenceName}.active";
-            var diactive = $"{sequenceName}.diactive";
+            var active = $"{sequenceName}-active";
+            var diactive = $"{sequenceName}-diactive";
             var toAct = @this.Entry(sequenceName: sequenceName)
                     .Name(active);
             var toDict = @this.Entry(sequenceName: sequenceName)

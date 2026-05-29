@@ -52,7 +52,6 @@ namespace net.yarukizero.vrchat.shizuku {
         public IEnumerable<IVrcParameter> Parameters { get; }
         public IEnumerable<IResultStage> Stages { get; }
 		public string SequenceName { get; }
-		public string StartStage { get; }
 		public __TransitionDefine TransitFrom { get; }
 		public __TransitionDefine TransitTo { get; }
 
@@ -63,9 +62,7 @@ namespace net.yarukizero.vrchat.shizuku {
 			__TransitionDefine transitTo=null) {
 
 			this.SequenceName = sequence.Name;
-			//this.StartStage = sequence.TargetStage;
             this.TransitFrom = transitFrom ?? __TransitionDefine.Idle();
-			//this.IsTransactEndStage = transactFirst.HasValue ? transactFirst.Value : false;
 			this.TransitTo = transitTo ?? __TransitionDefine.Idle();
             this.Stages = sequence.Stages.Select(x => new Stage(x, sequence.Host))
                 .ToList()
